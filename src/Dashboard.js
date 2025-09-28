@@ -16,9 +16,9 @@ const Dashboard = () => {
   const [showKnowledgeGraph, setShowKnowledgeGraph] = useState(false);
 
   // Knowledge Graph Component
-  const KnowledgeGraph = ({ publications, onPublicationSelect }) => {
+  const KnowledgeGraph = ({ publications, onPublicationSelect, selectedPublication }) => {
     const svgRef = useRef();
-    const [graphData, setGraphData] = useState({ nodes: [], links: [] });
+    const [focusedGraph, setFocusedGraph] = useState({ nodes: [], links: [] });
     const [selectedNode, setSelectedNode] = useState(null);
     const [nodeTypes, setNodeTypes] = useState({
       publications: true,
@@ -27,9 +27,12 @@ const Dashboard = () => {
     });
     const [graphSearchTerm, setGraphSearchTerm] = useState('');
 
-    // Extract graph data from publications
+    // Generate focused graph based on selected publication
     useEffect(() => {
-      if (!publications || publications.length === 0) return;
+      if (!selectedPublication || !publications || publications.length === 0) {
+        setFocusedGraph({ nodes: [], links: [] });
+        return;
+      }
 
       const nodes = [];
       const links = [];
@@ -64,94 +67,151 @@ const Dashboard = () => {
         return Array.from(concepts);
       };
 
-      const extractAuthors = (title) => {
+      const generateAuthors = (title) => {
         const surnames = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis'];
         const firstNames = ['James', 'Mary', 'John', 'Patricia', 'Robert', 'Jennifer', 'Michael', 'Linda'];
         
-        const authorCount = Math.floor(Math.random() * 3) + 1;
+        // Generate consistent authors based on publication ID for reproducibility
+        const seed = selectedPublication.id || 1;
+        const authorCount = (seed % 3) + 1;
         const authors = [];
+        
         for (let i = 0; i < authorCount; i++) {
-          const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
-          const lastName = surnames[Math.floor(Math.random() * surnames.length)];
-          authors.push(`${firstName} ${lastName}`);
+          const firstIdx = (seed + i * 3) % firstNames.length;
+          const lastIdx = (seed + i * 5) % surnames.length;
+          authors.push(`${firstNames[firstIdx]} ${surnames[lastIdx]}`);
         }
         return authors;
       };
 
-      publications.forEach(pub => {
-        const pubNode = addNode(
+      // Add the central publication node
+      const centralPub = addNode(
+        `pub_${selectedPublication.id}`,
+        selectedPublication.title.length > 50 ? selectedPublication.title.substring(0, 50) + '...' : selectedPublication.title,
+        'publication',
+        { 
+          fullTitle: selectedPublication.title,
+          category: selectedPublication.category,
+          organism: selectedPublication.organism,
+          link: selectedPublication.link,
+          publicationData: selectedPublication,
+          isCentral: true
+        }
+      );
+
+      // Add concepts for the selected publication
+      const concepts = extractConcepts(selectedPublication.title, selectedPublication.category);
+      const conceptNodes = [];
+      
+      concepts.forEach(concept => {
+        const conceptNode = addNode(
+          `concept_${concept.toLowerCase()}`,
+          concept,
+          'concept',
+          { relatedPublications: [] }
+        );
+        conceptNodes.push(conceptNode);
+        
+        links.push({
+          source: centralPub.id,
+          target: conceptNode.id,
+          type: 'studies'
+        });
+      });
+
+      // Add authors for the selected publication
+      const authors = generateAuthors(selectedPublication.title);
+      const authorNodes = [];
+      
+      authors.forEach(author => {
+        const authorNode = addNode(
+          `author_${author.replace(/\s+/g, '_').toLowerCase()}`,
+          author,
+          'author',
+          { publications: [selectedPublication.id] }
+        );
+        authorNodes.push(authorNode);
+        
+        links.push({
+          source: authorNode.id,
+          target: centralPub.id,
+          type: 'authored'
+        });
+      });
+
+      // Find related publications based on shared concepts
+      const relatedPublications = publications.filter(pub => {
+        if (pub.id === selectedPublication.id) return false;
+        
+        // Check if publication shares category or key concepts
+        if (pub.category === selectedPublication.category) return true;
+        
+        const pubConcepts = extractConcepts(pub.title, pub.category);
+        return concepts.some(concept => pubConcepts.includes(concept));
+      }).slice(0, 8); // Limit to 8 related publications to avoid overcrowding
+
+      // Add related publications
+      relatedPublications.forEach(pub => {
+        const relatedPubNode = addNode(
           `pub_${pub.id}`,
-          pub.title.length > 50 ? pub.title.substring(0, 50) + '...' : pub.title,
+          pub.title.length > 40 ? pub.title.substring(0, 40) + '...' : pub.title,
           'publication',
           { 
             fullTitle: pub.title,
             category: pub.category,
             organism: pub.organism,
             link: pub.link,
-            publicationData: pub
+            publicationData: pub,
+            isCentral: false
           }
         );
 
-        const concepts = extractConcepts(pub.title, pub.category);
-        concepts.forEach(concept => {
-          const conceptNode = addNode(
-            `concept_${concept.toLowerCase()}`,
-            concept,
-            'concept',
-            { publications: [] }
-          );
-          
-          conceptNode.publications.push(pub.id);
-          
-          links.push({
-            source: pubNode.id,
-            target: conceptNode.id,
-            type: 'studies'
-          });
-        });
-
-        const authors = extractAuthors(pub.title);
-        authors.forEach(author => {
-          const authorNode = addNode(
-            `author_${author.replace(/\s+/g, '_').toLowerCase()}`,
-            author,
-            'author',
-            { publications: [] }
-          );
-          
-          authorNode.publications.push(pub.id);
-          
-          links.push({
-            source: authorNode.id,
-            target: pubNode.id,
-            type: 'authored'
-          });
-        });
-      });
-
-      const conceptNodes = nodes.filter(n => n.type === 'concept');
-      conceptNodes.forEach((concept1, i) => {
-        conceptNodes.slice(i + 1).forEach(concept2 => {
-          const sharedPubs = concept1.publications.filter(pubId => 
-            concept2.publications.includes(pubId)
-          );
-          
-          if (sharedPubs.length >= 2) {
+        // Connect related publications to shared concepts
+        const relatedConcepts = extractConcepts(pub.title, pub.category);
+        conceptNodes.forEach(conceptNode => {
+          if (relatedConcepts.includes(conceptNode.label)) {
             links.push({
-              source: concept1.id,
-              target: concept2.id,
-              type: 'related',
-              strength: sharedPubs.length
+              source: relatedPubNode.id,
+              target: conceptNode.id,
+              type: 'studies',
+              isSecondary: true
             });
           }
         });
+
+        // Connect to authors if they work on similar topics
+        const relatedAuthors = generateAuthors(pub.title);
+        relatedAuthors.forEach(author => {
+          // Check if author already exists or create new one
+          const authorId = `author_${author.replace(/\s+/g, '_').toLowerCase()}`;
+          let authorNode = nodeMap.get(authorId);
+          
+          if (!authorNode) {
+            authorNode = addNode(
+              authorId,
+              author,
+              'author',
+              { publications: [pub.id] }
+            );
+          } else {
+            authorNode.publications.push(pub.id);
+          }
+          
+          links.push({
+            source: authorNode.id,
+            target: relatedPubNode.id,
+            type: 'authored',
+            isSecondary: true
+          });
+        });
       });
 
-      setGraphData({ nodes, links });
-    }, [publications]);
+      setFocusedGraph({ nodes, links });
+    }, [selectedPublication, publications]);
 
+    // Filter graph data
     const filteredGraphData = React.useMemo(() => {
-      let filteredNodes = graphData.nodes.filter(node => nodeTypes[node.type + 's']);
+      let filteredNodes = focusedGraph.nodes.filter(node => nodeTypes[node.type + 's']);
       
       if (graphSearchTerm) {
         filteredNodes = filteredNodes.filter(node => 
@@ -160,14 +220,15 @@ const Dashboard = () => {
       }
       
       const nodeIds = new Set(filteredNodes.map(n => n.id));
-      const filteredLinks = graphData.links.filter(link => 
+      const filteredLinks = focusedGraph.links.filter(link => 
         nodeIds.has(link.source.id || link.source) && 
         nodeIds.has(link.target.id || link.target)
       );
       
       return { nodes: filteredNodes, links: filteredLinks };
-    }, [graphData, nodeTypes, graphSearchTerm]);
+    }, [focusedGraph, nodeTypes, graphSearchTerm]);
 
+    // D3 visualization
     useEffect(() => {
       if (!filteredGraphData.nodes.length) return;
 
@@ -198,31 +259,31 @@ const Dashboard = () => {
       const simulation = d3.forceSimulation(filteredGraphData.nodes)
         .force("link", d3.forceLink(filteredGraphData.links)
           .id(d => d.id)
-          .distance(d => d.type === 'related' ? 100 : 80)
-          .strength(d => d.type === 'related' ? 0.1 : 0.3)
+          .distance(d => d.type === 'studies' ? 120 : 80)
+          .strength(d => d.isSecondary ? 0.2 : 0.5)
         )
-        .force("charge", d3.forceManyBody().strength(-200))
+        .force("charge", d3.forceManyBody().strength(d => d.isCentral ? -400 : -200))
         .force("center", d3.forceCenter(width / 2, height / 2))
         .force("collision", d3.forceCollide().radius(d => 
-          d.type === 'publication' ? 25 : d.type === 'concept' ? 20 : 15
+          d.isCentral ? 35 : (d.type === 'publication' ? 25 : d.type === 'concept' ? 20 : 15)
         ));
 
       const links = container.append("g")
         .selectAll("line")
         .data(filteredGraphData.links)
         .enter().append("line")
-        .attr("stroke", "#64748b")
-        .attr("stroke-opacity", 0.6)
-        .attr("stroke-width", d => d.type === 'related' ? 1 : 2);
+        .attr("stroke", d => d.isSecondary ? "#64748b" : "#94a3b8")
+        .attr("stroke-opacity", d => d.isSecondary ? 0.4 : 0.8)
+        .attr("stroke-width", d => d.isSecondary ? 1 : 2);
 
       const nodes = container.append("g")
         .selectAll("circle")
         .data(filteredGraphData.nodes)
         .enter().append("circle")
-        .attr("r", d => d.type === 'publication' ? 8 : d.type === 'concept' ? 6 : 5)
+        .attr("r", d => d.isCentral ? 12 : (d.type === 'publication' ? 8 : d.type === 'concept' ? 6 : 5))
         .attr("fill", d => colorScale[d.type])
-        .attr("stroke", "#fff")
-        .attr("stroke-width", 2)
+        .attr("stroke", d => d.isCentral ? "#fbbf24" : "#fff")
+        .attr("stroke-width", d => d.isCentral ? 4 : 2)
         .style("cursor", "pointer")
         .call(d3.drag()
           .on("start", (event, d) => {
@@ -246,7 +307,8 @@ const Dashboard = () => {
         .data(filteredGraphData.nodes)
         .enter().append("text")
         .text(d => d.label)
-        .attr("font-size", "10px")
+        .attr("font-size", d => d.isCentral ? "12px" : "10px")
+        .attr("font-weight", d => d.isCentral ? "bold" : "normal")
         .attr("fill", "#374151")
         .attr("text-anchor", "middle")
         .attr("dy", ".35em")
@@ -260,7 +322,7 @@ const Dashboard = () => {
           }
         })
         .on("mouseover", function(event, d) {
-          d3.select(this).attr("stroke-width", 4);
+          d3.select(this).attr("stroke-width", d.isCentral ? 6 : 4);
           
           const connectedNodeIds = new Set();
           filteredGraphData.links.forEach(link => {
@@ -276,9 +338,9 @@ const Dashboard = () => {
           );
         })
         .on("mouseout", function(event, d) {
-          d3.select(this).attr("stroke-width", 2);
+          d3.select(this).attr("stroke-width", d.isCentral ? 4 : 2);
           nodes.attr("opacity", 1);
-          links.attr("opacity", 0.6);
+          links.attr("opacity", d => d.isSecondary ? 0.4 : 0.8);
         });
 
       simulation.on("tick", () => {
@@ -294,7 +356,7 @@ const Dashboard = () => {
 
         labels
           .attr("x", d => d.x)
-          .attr("y", d => d.y + 20);
+          .attr("y", d => d.y + (d.isCentral ? 25 : 20));
       });
 
       return () => {
@@ -304,17 +366,33 @@ const Dashboard = () => {
 
     const nodeTypeCounts = React.useMemo(() => {
       return {
-        publications: graphData.nodes.filter(n => n.type === 'publication').length,
-        authors: graphData.nodes.filter(n => n.type === 'author').length,
-        concepts: graphData.nodes.filter(n => n.type === 'concept').length
+        publications: focusedGraph.nodes.filter(n => n.type === 'publication').length,
+        authors: focusedGraph.nodes.filter(n => n.type === 'author').length,
+        concepts: focusedGraph.nodes.filter(n => n.type === 'concept').length
       };
-    }, [graphData]);
+    }, [focusedGraph]);
+
+    if (!selectedPublication) {
+      return (
+        <div className="bg-gradient-to-br from-black/40 to-black/20 backdrop-blur-sm rounded-xl p-6 border border-indigo-500/30 mt-6">
+          <h3 className="text-lg font-bold mb-4 flex items-center text-indigo-400">
+            <Network className="w-5 h-5 mr-2" />
+            Knowledge Graph
+          </h3>
+          <div className="text-center py-8">
+            <Network className="w-16 h-16 text-gray-500 mx-auto mb-4" />
+            <h4 className="text-lg font-semibold text-gray-400 mb-2">Select a Publication to Explore</h4>
+            <p className="text-sm text-gray-500">Click on any publication above to see its research network including related authors, concepts, and connected publications.</p>
+          </div>
+        </div>
+      );
+    }
 
     return (
       <div className="bg-gradient-to-br from-black/40 to-black/20 backdrop-blur-sm rounded-xl p-6 border border-indigo-500/30 mt-6">
         <h3 className="text-lg font-bold mb-4 flex items-center text-indigo-400">
           <Network className="w-5 h-5 mr-2" />
-          Knowledge Graph
+          Knowledge Graph: "{selectedPublication.title.substring(0, 50)}..."
           <span className="ml-3 text-sm font-normal text-gray-400">
             ({filteredGraphData.nodes.length} nodes, {filteredGraphData.links.length} connections)
           </span>
@@ -360,8 +438,12 @@ const Dashboard = () => {
             <div className="text-gray-300 font-semibold mb-2">Legend</div>
             <div className="space-y-1">
               <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 rounded-full bg-blue-500 border-2 border-yellow-400"></div>
+                <span className="text-gray-300">Selected Pub</span>
+              </div>
+              <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                <span className="text-gray-300">Publications</span>
+                <span className="text-gray-300">Related Pubs</span>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 rounded-full bg-green-500"></div>
@@ -384,6 +466,7 @@ const Dashboard = () => {
               }`}></div>
               {selectedNode.type === 'publication' ? 'Publication' :
                selectedNode.type === 'author' ? 'Author' : 'Concept'}
+              {selectedNode.isCentral && <span className="ml-2 text-yellow-400 text-xs">(Selected)</span>}
             </h4>
             <p className="text-gray-300 text-sm mb-2">
               {selectedNode.type === 'publication' ? selectedNode.fullTitle : selectedNode.label}
@@ -402,7 +485,7 @@ const Dashboard = () => {
         )}
 
         <div className="mt-4 text-xs text-gray-500">
-          <p><strong>Interactions:</strong> Click nodes to select • Drag to reposition • Hover to highlight connections • Scroll to zoom • Click publications to analyze</p>
+          <p><strong>Focused Network:</strong> Shows connections for the selected publication • Click other publications to explore their networks • Drag nodes to reposition • Hover to highlight connections</p>
         </div>
       </div>
     );
@@ -877,6 +960,7 @@ const Dashboard = () => {
               <KnowledgeGraph 
                 publications={filteredPublications} 
                 onPublicationSelect={processPublicationWithAI}
+                selectedPublication={selectedPublication}
               />
             )}
             
