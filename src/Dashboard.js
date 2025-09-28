@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, BookOpen, Rocket, Brain, Loader2, ExternalLink, Zap, Network, Eye, EyeOff, Filter } from 'lucide-react';
+import { Search, BookOpen, Rocket, Brain, Loader2, ExternalLink, Zap, Network, Eye, EyeOff } from 'lucide-react';
 import * as d3 from 'd3';
 
 const Dashboard = () => {
@@ -407,8 +407,6 @@ const Dashboard = () => {
       </div>
     );
   };
-
-  const svgRef = useRef();
 
   // Auto-categorize publications based on title keywords
   const categorizePublication = (title) => {
