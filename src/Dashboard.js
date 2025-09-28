@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Search, BookOpen, Rocket, Brain, Loader2, ExternalLink, Zap, Network, Eye, EyeOff, Filter } from 'lucide-react';
 import * as d3 from 'd3';
 
