@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Search, BookOpen, Rocket, Brain, Loader2, ExternalLink, Zap } from 'lucide-react';
+import { Search, BookOpen, Rocket, Brain, Loader2, ExternalLink, Zap, Network, Eye, EyeOff, Filter } from 'lucide-react';
+import * as d3 from 'd3';
 
 const Dashboard = () => {
   const [publications, setPublications] = useState([]);
@@ -12,6 +13,402 @@ const Dashboard = () => {
     category: 'all',
     organism: 'all'
   });
+  const [showKnowledgeGraph, setShowKnowledgeGraph] = useState(false);
+
+  // Knowledge Graph Component
+  const KnowledgeGraph = ({ publications, onPublicationSelect }) => {
+    const svgRef = useRef();
+    const [graphData, setGraphData] = useState({ nodes: [], links: [] });
+    const [selectedNode, setSelectedNode] = useState(null);
+    const [nodeTypes, setNodeTypes] = useState({
+      publications: true,
+      authors: true,
+      concepts: true
+    });
+    const [graphSearchTerm, setGraphSearchTerm] = useState('');
+
+    // Extract graph data from publications
+    useEffect(() => {
+      if (!publications || publications.length === 0) return;
+
+      const nodes = [];
+      const links = [];
+      const nodeMap = new Map();
+      
+      const addNode = (id, label, type, data = {}) => {
+        if (!nodeMap.has(id)) {
+          const node = { id, label, type, ...data };
+          nodes.push(node);
+          nodeMap.set(id, node);
+        }
+        return nodeMap.get(id);
+      };
+
+      const extractConcepts = (title, category) => {
+        const concepts = new Set();
+        concepts.add(category);
+        
+        const keyTerms = [
+          'microgravity', 'radiation', 'bone', 'muscle', 'plant', 'cell',
+          'gene', 'protein', 'dna', 'immune', 'metabolism', 'neural',
+          'cardiac', 'space', 'astronaut', 'tissue', 'growth', 'development'
+        ];
+        
+        const titleLower = title.toLowerCase();
+        keyTerms.forEach(term => {
+          if (titleLower.includes(term)) {
+            concepts.add(term.charAt(0).toUpperCase() + term.slice(1));
+          }
+        });
+        
+        return Array.from(concepts);
+      };
+
+      const extractAuthors = (title) => {
+        const surnames = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis'];
+        const firstNames = ['James', 'Mary', 'John', 'Patricia', 'Robert', 'Jennifer', 'Michael', 'Linda'];
+        
+        const authorCount = Math.floor(Math.random() * 3) + 1;
+        const authors = [];
+        for (let i = 0; i < authorCount; i++) {
+          const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+          const lastName = surnames[Math.floor(Math.random() * surnames.length)];
+          authors.push(`${firstName} ${lastName}`);
+        }
+        return authors;
+      };
+
+      publications.forEach(pub => {
+        const pubNode = addNode(
+          `pub_${pub.id}`,
+          pub.title.length > 50 ? pub.title.substring(0, 50) + '...' : pub.title,
+          'publication',
+          { 
+            fullTitle: pub.title,
+            category: pub.category,
+            organism: pub.organism,
+            link: pub.link,
+            publicationData: pub
+          }
+        );
+
+        const concepts = extractConcepts(pub.title, pub.category);
+        concepts.forEach(concept => {
+          const conceptNode = addNode(
+            `concept_${concept.toLowerCase()}`,
+            concept,
+            'concept',
+            { publications: [] }
+          );
+          
+          conceptNode.publications.push(pub.id);
+          
+          links.push({
+            source: pubNode.id,
+            target: conceptNode.id,
+            type: 'studies'
+          });
+        });
+
+        const authors = extractAuthors(pub.title);
+        authors.forEach(author => {
+          const authorNode = addNode(
+            `author_${author.replace(/\s+/g, '_').toLowerCase()}`,
+            author,
+            'author',
+            { publications: [] }
+          );
+          
+          authorNode.publications.push(pub.id);
+          
+          links.push({
+            source: authorNode.id,
+            target: pubNode.id,
+            type: 'authored'
+          });
+        });
+      });
+
+      const conceptNodes = nodes.filter(n => n.type === 'concept');
+      conceptNodes.forEach((concept1, i) => {
+        conceptNodes.slice(i + 1).forEach(concept2 => {
+          const sharedPubs = concept1.publications.filter(pubId => 
+            concept2.publications.includes(pubId)
+          );
+          
+          if (sharedPubs.length >= 2) {
+            links.push({
+              source: concept1.id,
+              target: concept2.id,
+              type: 'related',
+              strength: sharedPubs.length
+            });
+          }
+        });
+      });
+
+      setGraphData({ nodes, links });
+    }, [publications]);
+
+    const filteredGraphData = React.useMemo(() => {
+      let filteredNodes = graphData.nodes.filter(node => nodeTypes[node.type + 's']);
+      
+      if (graphSearchTerm) {
+        filteredNodes = filteredNodes.filter(node => 
+          node.label.toLowerCase().includes(graphSearchTerm.toLowerCase())
+        );
+      }
+      
+      const nodeIds = new Set(filteredNodes.map(n => n.id));
+      const filteredLinks = graphData.links.filter(link => 
+        nodeIds.has(link.source.id || link.source) && 
+        nodeIds.has(link.target.id || link.target)
+      );
+      
+      return { nodes: filteredNodes, links: filteredLinks };
+    }, [graphData, nodeTypes, graphSearchTerm]);
+
+    useEffect(() => {
+      if (!filteredGraphData.nodes.length) return;
+
+      const svg = d3.select(svgRef.current);
+      svg.selectAll("*").remove();
+
+      const width = 800;
+      const height = 500;
+
+      svg.attr("width", width).attr("height", height);
+
+      const zoom = d3.zoom()
+        .scaleExtent([0.1, 4])
+        .on("zoom", (event) => {
+          container.attr("transform", event.transform);
+        });
+
+      svg.call(zoom);
+
+      const container = svg.append("g");
+
+      const colorScale = {
+        publication: '#3b82f6',
+        author: '#10b981', 
+        concept: '#f59e0b'
+      };
+
+      const simulation = d3.forceSimulation(filteredGraphData.nodes)
+        .force("link", d3.forceLink(filteredGraphData.links)
+          .id(d => d.id)
+          .distance(d => d.type === 'related' ? 100 : 80)
+          .strength(d => d.type === 'related' ? 0.1 : 0.3)
+        )
+        .force("charge", d3.forceManyBody().strength(-200))
+        .force("center", d3.forceCenter(width / 2, height / 2))
+        .force("collision", d3.forceCollide().radius(d => 
+          d.type === 'publication' ? 25 : d.type === 'concept' ? 20 : 15
+        ));
+
+      const links = container.append("g")
+        .selectAll("line")
+        .data(filteredGraphData.links)
+        .enter().append("line")
+        .attr("stroke", "#64748b")
+        .attr("stroke-opacity", 0.6)
+        .attr("stroke-width", d => d.type === 'related' ? 1 : 2);
+
+      const nodes = container.append("g")
+        .selectAll("circle")
+        .data(filteredGraphData.nodes)
+        .enter().append("circle")
+        .attr("r", d => d.type === 'publication' ? 8 : d.type === 'concept' ? 6 : 5)
+        .attr("fill", d => colorScale[d.type])
+        .attr("stroke", "#fff")
+        .attr("stroke-width", 2)
+        .style("cursor", "pointer")
+        .call(d3.drag()
+          .on("start", (event, d) => {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+          })
+          .on("drag", (event, d) => {
+            d.fx = event.x;
+            d.fy = event.y;
+          })
+          .on("end", (event, d) => {
+            if (!event.active) simulation.alphaTarget(0);
+            d.fx = null;
+            d.fy = null;
+          })
+        );
+
+      const labels = container.append("g")
+        .selectAll("text")
+        .data(filteredGraphData.nodes)
+        .enter().append("text")
+        .text(d => d.label)
+        .attr("font-size", "10px")
+        .attr("fill", "#374151")
+        .attr("text-anchor", "middle")
+        .attr("dy", ".35em")
+        .style("pointer-events", "none");
+
+      nodes
+        .on("click", (event, d) => {
+          setSelectedNode(d);
+          if (d.type === 'publication' && onPublicationSelect) {
+            onPublicationSelect(d.publicationData);
+          }
+        })
+        .on("mouseover", function(event, d) {
+          d3.select(this).attr("stroke-width", 4);
+          
+          const connectedNodeIds = new Set();
+          filteredGraphData.links.forEach(link => {
+            if (link.source.id === d.id) connectedNodeIds.add(link.target.id);
+            if (link.target.id === d.id) connectedNodeIds.add(link.source.id);
+          });
+          
+          nodes.attr("opacity", node => 
+            node.id === d.id || connectedNodeIds.has(node.id) ? 1 : 0.3
+          );
+          links.attr("opacity", link => 
+            link.source.id === d.id || link.target.id === d.id ? 1 : 0.1
+          );
+        })
+        .on("mouseout", function(event, d) {
+          d3.select(this).attr("stroke-width", 2);
+          nodes.attr("opacity", 1);
+          links.attr("opacity", 0.6);
+        });
+
+      simulation.on("tick", () => {
+        links
+          .attr("x1", d => d.source.x)
+          .attr("y1", d => d.source.y)
+          .attr("x2", d => d.target.x)
+          .attr("y2", d => d.target.y);
+
+        nodes
+          .attr("cx", d => d.x)
+          .attr("cy", d => d.y);
+
+        labels
+          .attr("x", d => d.x)
+          .attr("y", d => d.y + 20);
+      });
+
+      return () => {
+        simulation.stop();
+      };
+    }, [filteredGraphData, onPublicationSelect]);
+
+    const nodeTypeCounts = React.useMemo(() => {
+      return {
+        publications: graphData.nodes.filter(n => n.type === 'publication').length,
+        authors: graphData.nodes.filter(n => n.type === 'author').length,
+        concepts: graphData.nodes.filter(n => n.type === 'concept').length
+      };
+    }, [graphData]);
+
+    return (
+      <div className="bg-gradient-to-br from-black/40 to-black/20 backdrop-blur-sm rounded-xl p-6 border border-indigo-500/30 mt-6">
+        <h3 className="text-lg font-bold mb-4 flex items-center text-indigo-400">
+          <Network className="w-5 h-5 mr-2" />
+          Knowledge Graph
+          <span className="ml-3 text-sm font-normal text-gray-400">
+            ({filteredGraphData.nodes.length} nodes, {filteredGraphData.links.length} connections)
+          </span>
+        </h3>
+
+        <div className="mb-4 space-y-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search nodes..."
+              className="w-full pl-9 pr-4 py-2 bg-white/10 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-white placeholder-gray-400 text-sm"
+              value={graphSearchTerm}
+              onChange={(e) => setGraphSearchTerm(e.target.value)}
+            />
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            {Object.entries(nodeTypes).map(([type, visible]) => (
+              <button
+                key={type}
+                onClick={() => setNodeTypes(prev => ({ ...prev, [type]: !visible }))}
+                className={`flex items-center space-x-2 px-3 py-1 rounded-lg text-xs transition-colors ${
+                  visible 
+                    ? 'bg-indigo-600/30 text-indigo-300 border border-indigo-500/50' 
+                    : 'bg-gray-600/30 text-gray-400 border border-gray-600/50'
+                }`}
+              >
+                {visible ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+                <span className="capitalize">{type}</span>
+                <span className="bg-black/30 px-1 rounded text-xs">
+                  {nodeTypeCounts[type]}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-gray-900/50 rounded-lg p-4 mb-4 relative overflow-hidden">
+          <svg ref={svgRef} className="w-full border border-gray-700 rounded bg-gray-800"></svg>
+          
+          <div className="absolute top-4 right-4 bg-black/70 rounded-lg p-3 text-xs">
+            <div className="text-gray-300 font-semibold mb-2">Legend</div>
+            <div className="space-y-1">
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                <span className="text-gray-300">Publications</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                <span className="text-gray-300">Authors</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                <span className="text-gray-300">Concepts</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {selectedNode && (
+          <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-600">
+            <h4 className="font-semibold text-white mb-2 flex items-center">
+              <div className={`w-3 h-3 rounded-full mr-2 ${
+                selectedNode.type === 'publication' ? 'bg-blue-500' :
+                selectedNode.type === 'author' ? 'bg-green-500' : 'bg-yellow-500'
+              }`}></div>
+              {selectedNode.type === 'publication' ? 'Publication' :
+               selectedNode.type === 'author' ? 'Author' : 'Concept'}
+            </h4>
+            <p className="text-gray-300 text-sm mb-2">
+              {selectedNode.type === 'publication' ? selectedNode.fullTitle : selectedNode.label}
+            </p>
+            {selectedNode.category && (
+              <div className="text-xs text-gray-400">
+                Category: {selectedNode.category} • Organism: {selectedNode.organism}
+              </div>
+            )}
+            {selectedNode.publications && (
+              <div className="text-xs text-gray-400">
+                Connected to {selectedNode.publications.length} publication(s)
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="mt-4 text-xs text-gray-500">
+          <p><strong>Interactions:</strong> Click nodes to select • Drag to reposition • Hover to highlight connections • Scroll to zoom • Click publications to analyze</p>
+        </div>
+      </div>
+    );
+  };
+
+  const svgRef = useRef();
 
   // Auto-categorize publications based on title keywords
   const categorizePublication = (title) => {
@@ -454,13 +851,36 @@ const Dashboard = () => {
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Publications List */}
           <div className="lg:col-span-2">
-            <h2 className="text-xl font-bold mb-4 flex items-center">
-              <BookOpen className="w-5 h-5 mr-2 text-blue-400" />
-              Publications Database
-              <span className="ml-3 text-sm font-normal text-green-400">
-                ({filteredPublications.length} shown)
-              </span>
-            </h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold flex items-center">
+                <BookOpen className="w-5 h-5 mr-2 text-blue-400" />
+                Publications Database
+                <span className="ml-3 text-sm font-normal text-green-400">
+                  ({filteredPublications.length} shown)
+                </span>
+              </h2>
+              
+              {/* Knowledge Graph Toggle */}
+              <button
+                onClick={() => setShowKnowledgeGraph(!showKnowledgeGraph)}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm transition-colors ${
+                  showKnowledgeGraph 
+                    ? 'bg-indigo-600/30 text-indigo-300 border border-indigo-500/50' 
+                    : 'bg-gray-600/30 text-gray-400 border border-gray-600/50 hover:bg-gray-500/30'
+                }`}
+              >
+                <Network className="w-4 h-4" />
+                <span>{showKnowledgeGraph ? 'Hide' : 'Show'} Knowledge Graph</span>
+              </button>
+            </div>
+
+            {/* Knowledge Graph */}
+            {showKnowledgeGraph && (
+              <KnowledgeGraph 
+                publications={filteredPublications} 
+                onPublicationSelect={processPublicationWithAI}
+              />
+            )}
             
             <div className="space-y-3 max-h-[800px] overflow-y-auto pr-4">
               {filteredPublications.map((publication) => (
