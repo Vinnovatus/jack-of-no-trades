@@ -13,45 +13,6 @@ const Dashboard = () => {
     organism: 'all'
   });
 
-  // Sample data for demonstration (used as fallback)
-  const samplePublications = [
-    {
-      id: 1,
-      title: "Effects of Microgravity on Bone Density in Long-Duration Spaceflight",
-      link: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC123456/",
-      category: "Bone & Musculoskeletal",
-      organism: "Human"
-    },
-    {
-      id: 2,
-      title: "Plant Growth and Development in Simulated Martian Conditions",
-      link: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC789012/",
-      category: "Plant Biology",
-      organism: "Arabidopsis"
-    },
-    {
-      id: 3,
-      title: "Radiation-Induced DNA Damage in Space Environment Using Cell Culture Models",
-      link: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC345678/",
-      category: "Radiation Biology",
-      organism: "Cell Culture"
-    },
-    {
-      id: 4,
-      title: "Muscle Atrophy Prevention During Extended Space Missions",
-      link: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC901234/",
-      category: "Cardiovascular & Muscle",
-      organism: "Human"
-    },
-    {
-      id: 5,
-      title: "Immune System Response to Microgravity in Mouse Models",
-      link: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC567890/",
-      category: "Immunology",
-      organism: "Mouse"
-    }
-  ];
-
   // Auto-categorize publications based on title keywords
   const categorizePublication = (title) => {
     const titleLower = title.toLowerCase();
@@ -189,6 +150,45 @@ const Dashboard = () => {
 
   // Load publications - try GitHub first, fallback to sample data
   useEffect(() => {
+    // Sample data for demonstration (used as fallback)
+    const samplePublications = [
+      {
+        id: 1,
+        title: "Effects of Microgravity on Bone Density in Long-Duration Spaceflight",
+        link: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC123456/",
+        category: "Bone & Musculoskeletal",
+        organism: "Human"
+      },
+      {
+        id: 2,
+        title: "Plant Growth and Development in Simulated Martian Conditions",
+        link: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC789012/",
+        category: "Plant Biology",
+        organism: "Arabidopsis"
+      },
+      {
+        id: 3,
+        title: "Radiation-Induced DNA Damage in Space Environment Using Cell Culture Models",
+        link: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC345678/",
+        category: "Radiation Biology",
+        organism: "Cell Culture"
+      },
+      {
+        id: 4,
+        title: "Muscle Atrophy Prevention During Extended Space Missions",
+        link: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC901234/",
+        category: "Cardiovascular & Muscle",
+        organism: "Human"
+      },
+      {
+        id: 5,
+        title: "Immune System Response to Microgravity in Mouse Models",
+        link: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC567890/",
+        category: "Immunology",
+        organism: "Mouse"
+      }
+    ];
+
     const loadPublications = async () => {
       try {
         console.log("🌐 Attempting to fetch NASA publications from GitHub...");
@@ -205,7 +205,6 @@ const Dashboard = () => {
         
         // Simple CSV parsing for demo (you could use Papa Parse here)
         const lines = csvContent.split('\n');
-        const headers = lines[0].split(',');
         const data = lines.slice(1).filter(line => line.trim());
         
         const pubs = data.map((line, index) => {
@@ -714,25 +713,6 @@ const Dashboard = () => {
                 )}
               </div>
             )}
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="mt-12 bg-black/30 backdrop-blur-sm rounded-xl p-6 border border-gray-700">
-          <h3 className="text-lg font-bold mb-2 text-gray-300 text-center">NASA Publications Explorer</h3>
-          <p className="text-sm text-gray-400 mb-4 text-center">
-            Powered by Google Gemini AI for comprehensive research analysis
-          </p>
-          
-          <div className="bg-blue-600/10 border border-blue-500/20 rounded-lg p-4">
-            <h4 className="text-blue-400 font-semibold text-sm mb-2">🚀 Features</h4>
-            <ul className="text-xs text-gray-300 space-y-1">
-              <li>• Real-time AI analysis using Google Gemini API</li>
-              <li>• Automatic publication categorization and filtering</li>
-              <li>• Interactive search across research titles</li>
-              <li>• Visual research process diagrams</li>
-              <li>• Direct links to full publications</li>
-            </ul>
           </div>
         </div>
       </div>
