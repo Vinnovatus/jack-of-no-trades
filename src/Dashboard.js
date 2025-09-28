@@ -595,7 +595,9 @@ const Dashboard = () => {
                         <Brain className="w-4 h-4 mr-1" />
                         Gemini AI Summary
                       </h4>
-                      <p className="text-xs text-gray-300 leading-relaxed">{aiResponse.summary}</p>
+                      <div className="max-h-32 overflow-y-auto pr-2">
+                        <p className="text-xs text-gray-300 leading-relaxed">{aiResponse.summary}</p>
+                      </div>
                     </div>
 
                     {/* Problems Addressed */}
