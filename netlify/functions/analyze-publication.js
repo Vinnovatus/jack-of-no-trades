@@ -40,7 +40,7 @@ exports.handler = async (event, context) => {
       };
     }
 
-    const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+    const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-8b:generateContent?key=${GEMINI_API_KEY}`;
     
     console.log('Starting analysis for:', publicationTitle);
     console.log('Publication link:', publicationLink);
@@ -92,9 +92,9 @@ Based on the actual publication content above, provide detailed analysis in this
 {
   "summary": "Comprehensive summary of the research based on actual content (2-3 detailed sentences)",
   "problemsAddressed": [
-    "Main problem 1 mentioned in the paper",
-    "Main problem 2 mentioned in the paper",
-    "Main problem 3 mentioned in the paper"
+    "Specific problem 1 mentioned in the paper",
+    "Specific problem 2 mentioned in the paper",
+    "Specific problem 3 mentioned in the paper"
   ],
   "keyFindings": [
     "Actual finding 1 from the research",
@@ -181,15 +181,54 @@ Provide analysis in this JSON format:
     }
 
     const data = await apiResponse.json();
-    console.log('Received API response');
+    console.log('Received API response, structure:', JSON.stringify(data, null, 2));
     
-    // Parse response
+    // Parse response with robust error handling
     let aiText = '';
-    if (data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0]) {
-      aiText = data.candidates[0].content.parts[0].text;
-    } else {
-      throw new Error('Invalid API response structure');
+    
+    if (!data) {
+      throw new Error('No data in API response');
     }
+    
+    if (!data.candidates) {
+      console.error('No candidates in response:', data);
+      if (data.error) {
+        throw new Error(`API Error: ${data.error.message || JSON.stringify(data.error)}`);
+      }
+      throw new Error('No candidates in API response');
+    }
+    
+    if (!Array.isArray(data.candidates) || data.candidates.length === 0) {
+      console.error('Candidates is not a valid array:', data.candidates);
+      throw new Error('Candidates array is empty or invalid');
+    }
+    
+    const candidate = data.candidates[0];
+    if (!candidate) {
+      throw new Error('First candidate is null or undefined');
+    }
+    
+    if (!candidate.content) {
+      console.error('No content in candidate:', candidate);
+      if (candidate.finishReason) {
+        throw new Error(`API stopped generating: ${candidate.finishReason}`);
+      }
+      throw new Error('No content in candidate');
+    }
+    
+    if (!candidate.content.parts || !Array.isArray(candidate.content.parts) || candidate.content.parts.length === 0) {
+      console.error('No parts in content:', candidate.content);
+      throw new Error('No parts in content');
+    }
+    
+    const part = candidate.content.parts[0];
+    if (!part || !part.text) {
+      console.error('No text in first part:', part);
+      throw new Error('No text in first part');
+    }
+    
+    aiText = part.text;
+    console.log('Successfully extracted AI text, length:', aiText.length);
 
     // Extract and parse JSON
     try {
