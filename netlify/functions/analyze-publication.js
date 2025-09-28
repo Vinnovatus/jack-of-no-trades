@@ -43,7 +43,7 @@ exports.handler = async (event, context) => {
       };
     }
 
-    const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY};
+    const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
     
     const prompt = `Analyze this NASA space bioscience publication and provide a comprehensive scientific analysis:
 
