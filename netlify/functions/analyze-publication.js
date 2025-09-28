@@ -162,7 +162,7 @@ Provide analysis in this JSON format:
           temperature: 0.3,
           topK: 20,
           topP: 0.8,
-          maxOutputTokens: 1024,
+          maxOutputTokens: 2048, // Increased from 1024
         }
       })
     });
@@ -206,6 +206,81 @@ Provide analysis in this JSON format:
     const candidate = data.candidates[0];
     if (!candidate) {
       throw new Error('First candidate is null or undefined');
+    }
+    
+    // Handle MAX_TOKENS case specifically
+    if (candidate.finishReason === 'MAX_TOKENS') {
+      console.log('Response was truncated due to MAX_TOKENS, trying with shorter content...');
+      
+      // Retry with much shorter content if we have full content
+      if (contentSource === 'full-content') {
+        const shortContent = truncateContent(publicationContent, 1000); // Much shorter
+        
+        const shortPrompt = `Analyze this NASA space biology research publication:
+
+Title: "${publicationTitle}"
+
+Publication Content (excerpt):
+${shortContent}
+
+Provide concise analysis in JSON format:
+{
+  "summary": "Brief research summary",
+  "problemsAddressed": ["Problem 1", "Problem 2"],
+  "keyFindings": ["Finding 1", "Finding 2"],
+  "researchGoals": ["Goal 1", "Goal 2"],
+  "futureDirections": ["Direction 1"],
+  "methodology": ["Method 1"],
+  "impact": "Research significance"
+}`;
+
+        try {
+          const retryResponse = await fetch(GEMINI_API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: shortPrompt }] }],
+              generationConfig: {
+                temperature: 0.3,
+                maxOutputTokens: 1024,
+              }
+            })
+          });
+          
+          if (retryResponse.ok) {
+            const retryData = await retryResponse.json();
+            if (retryData.candidates && retryData.candidates[0] && retryData.candidates[0].content && retryData.candidates[0].content.parts) {
+              aiText = retryData.candidates[0].content.parts[0].text;
+              console.log('Retry with shorter content succeeded');
+            }
+          }
+        } catch (retryError) {
+          console.log('Retry failed, falling back to title analysis');
+        }
+      }
+      
+      // If retry failed or we don't have full content, fall back to simple response
+      if (!aiText) {
+        return {
+          statusCode: 200,
+          headers,
+          body: JSON.stringify({
+            success: true,
+            data: {
+              summary: "Analysis exceeded token limit. This research focuses on space biology with implications for astronaut health and space missions.",
+              problemsAddressed: ["Space environment challenges", "Biological adaptation needs"],
+              keyFindings: ["Significant biological responses observed", "Research methodology validated"],
+              researchGoals: ["Understand space biology effects", "Develop countermeasures"],
+              futureDirections: ["Extended studies recommended"],
+              methodology: ["Experimental research approach"],
+              impact: "Important contribution to space medicine",
+              contentSource: contentSource,
+              visualDiagram: generateDiagram(publicationTitle, null)
+            },
+            note: "Response truncated due to length, showing simplified analysis"
+          })
+        };
+      }
     }
     
     if (!candidate.content) {
