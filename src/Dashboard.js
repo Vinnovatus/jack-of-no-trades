@@ -1133,7 +1133,7 @@ const Dashboard = () => {
                     )}
 
                     {/* Visual Diagram */}
-                    {aiResponse.visualDiagram && (
+                    /*{aiResponse.visualDiagram && (
                       <div className="bg-gradient-to-br from-black/40 to-black/20 backdrop-blur-sm rounded-xl p-4 border border-cyan-500/30">
                         <h4 className="font-semibold text-cyan-400 mb-3 text-sm">AI-Generated Research Diagram</h4>
                         <div className="bg-gray-800 rounded-lg p-4 mb-2">
@@ -1206,7 +1206,7 @@ const Dashboard = () => {
                           </svg>
                         </div>
                       </div>
-                    )}
+                    )}*/
 
                     {/* Research Impact */}
                     <div className="bg-gradient-to-br from-black/40 to-black/20 backdrop-blur-sm rounded-xl p-4 border border-orange-500/30">
