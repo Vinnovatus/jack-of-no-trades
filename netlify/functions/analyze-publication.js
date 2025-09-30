@@ -40,7 +40,7 @@ exports.handler = async (event, context) => {
       };
     }
 
-    const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+    const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-8b:generateContent?key=${GEMINI_API_KEY}`;
     
     console.log('Starting analysis for:', publicationTitle);
     console.log('Publication link:', publicationLink);
@@ -78,7 +78,7 @@ exports.handler = async (event, context) => {
     
     if (contentSource === 'full-content' && publicationContent.length > 500) {
       // Truncate content to fit within API limits (keep most important parts)
-      const truncatedContent = truncateContent(publicationContent, 3000);
+      const truncatedContent = truncateContent(publicationContent, 8000);
       
       prompt = `Analyze this NASA space biology research publication:
 
@@ -153,7 +153,7 @@ Provide analysis in this JSON format:
 
     console.log('Sending to Gemini API, content source:', contentSource);
 
-    const apiResponse = await fetch(GEMINI_API_URL, {
+          const apiResponse = await fetch(GEMINI_API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -162,7 +162,7 @@ Provide analysis in this JSON format:
           temperature: 0.3,
           topK: 20,
           topP: 0.8,
-          maxOutputTokens: 2048, // Increased from 1024
+          maxOutputTokens: 4096, // Increased for more detailed responses
         }
       })
     });
