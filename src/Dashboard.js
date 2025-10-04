@@ -309,7 +309,7 @@ const Dashboard = () => {
         .text(d => d.label)
         .attr("font-size", d => d.isCentral ? "12px" : "10px")
         .attr("font-weight", d => d.isCentral ? "bold" : "normal")
-        .attr("fill", "#374151")
+        .attr("fill", "#1f2937")
         .attr("text-anchor", "middle")
         .attr("dy", ".35em")
         .style("pointer-events", "none");
@@ -374,56 +374,62 @@ const Dashboard = () => {
 
     if (!selectedPublication) {
       return (
-        <div className="bg-gradient-to-br from-black/40 to-black/20 backdrop-blur-sm rounded-xl p-6 border border-indigo-500/30 mt-6">
-          <h3 className="text-lg font-bold mb-4 flex items-center text-indigo-400">
-            <Network className="w-5 h-5 mr-2" />
+        <div className="bg-gradient-to-br from-slate-800 to-slate-700 rounded-3xl p-8 border-4 border-dashed border-cyan-500/50 mt-6">
+          <h3 className="text-2xl font-black mb-4 flex items-center text-cyan-400">
+            <div className="bg-cyan-400 p-2 rounded-full mr-3">
+              <Network className="w-5 h-5 text-slate-900" />
+            </div>
             Knowledge Graph
           </h3>
           <div className="text-center py-8">
-            <Network className="w-16 h-16 text-gray-500 mx-auto mb-4" />
-            <h4 className="text-lg font-semibold text-gray-400 mb-2">Select a Publication to Explore</h4>
-            <p className="text-sm text-gray-500">Click on any publication above to see its research network including related authors, concepts, and connected publications.</p>
+            <div className="bg-purple-500 w-20 h-20 rounded-full mx-auto mb-5 flex items-center justify-center">
+              <Network className="w-10 h-10 text-white" />
+            </div>
+            <h4 className="text-xl font-bold text-yellow-400 mb-3">🔗 Connect the Dots!</h4>
+            <p className="text-sm text-cyan-300 font-medium">Click any publication to see how research connects and collaborates ✨</p>
           </div>
         </div>
       );
     }
 
     return (
-      <div className="bg-gradient-to-br from-black/40 to-black/20 backdrop-blur-sm rounded-xl p-6 border border-indigo-500/30 mt-6">
-        <h3 className="text-lg font-bold mb-4 flex items-center text-indigo-400">
-          <Network className="w-5 h-5 mr-2" />
-          Knowledge Graph: "{selectedPublication.title.substring(0, 50)}..."
-          <span className="ml-3 text-sm font-normal text-gray-400">
-            ({filteredGraphData.nodes.length} nodes, {filteredGraphData.links.length} connections)
+      <div className="bg-gradient-to-br from-slate-800 to-slate-700 rounded-3xl p-6 border-4 border-purple-500 mt-6 shadow-2xl">
+        <h3 className="text-xl font-black mb-4 flex items-center text-purple-300">
+          <div className="bg-purple-400 p-2 rounded-full mr-3">
+            <Network className="w-4 h-4 text-slate-900" />
+          </div>
+          Knowledge Graph: "{selectedPublication.title.substring(0, 40)}..."
+          <span className="ml-3 px-3 py-1 bg-cyan-500 text-slate-900 rounded-full text-xs font-black">
+            {filteredGraphData.nodes.length} nodes
           </span>
         </h3>
 
         <div className="mb-4 space-y-3">
           <div className="relative">
-            <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-4 top-3 w-4 h-4 text-cyan-400" />
             <input
               type="text"
-              placeholder="Search nodes..."
-              className="w-full pl-9 pr-4 py-2 bg-white/10 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-white placeholder-gray-400 text-sm"
+              placeholder="Search the network..."
+              className="w-full pl-11 pr-4 py-2.5 bg-slate-700 border-2 border-cyan-400/50 rounded-2xl focus:ring-4 focus:ring-purple-400/50 text-white placeholder-cyan-300/60 text-sm font-medium"
               value={graphSearchTerm}
               onChange={(e) => setGraphSearchTerm(e.target.value)}
             />
           </div>
 
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-2">
             {Object.entries(nodeTypes).map(([type, visible]) => (
               <button
                 key={type}
                 onClick={() => setNodeTypes(prev => ({ ...prev, [type]: !visible }))}
-                className={`flex items-center space-x-2 px-3 py-1 rounded-lg text-xs transition-colors ${
+                className={`flex items-center space-x-2 px-3 py-2 rounded-full text-xs font-bold transition-all transform hover:scale-105 ${
                   visible 
-                    ? 'bg-indigo-600/30 text-indigo-300 border border-indigo-500/50' 
-                    : 'bg-gray-600/30 text-gray-400 border border-gray-600/50'
+                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white border-2 border-purple-300' 
+                    : 'bg-slate-600 text-gray-400 border-2 border-slate-500'
                 }`}
               >
                 {visible ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
                 <span className="capitalize">{type}</span>
-                <span className="bg-black/30 px-1 rounded text-xs">
+                <span className="bg-white/20 px-1.5 rounded-full">
                   {nodeTypeCounts[type]}
                 </span>
               </button>
@@ -431,61 +437,63 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className="bg-gray-900/50 rounded-lg p-4 mb-4 relative overflow-hidden">
-          <svg ref={svgRef} className="w-full border border-gray-700 rounded bg-gray-800"></svg>
+        <div className="bg-slate-900/80 rounded-2xl p-4 mb-4 relative overflow-hidden border-2 border-cyan-500/30">
+          <svg ref={svgRef} className="w-full border-2 border-slate-700 rounded-xl bg-slate-800"></svg>
           
-          <div className="absolute top-4 right-4 bg-black/70 rounded-lg p-3 text-xs">
-            <div className="text-gray-300 font-semibold mb-2">Legend</div>
-            <div className="space-y-1">
+          <div className="absolute top-4 right-4 bg-slate-800/95 rounded-2xl p-3 text-xs border-2 border-yellow-400">
+            <div className="text-yellow-400 font-black mb-2">🎨 Legend</div>
+            <div className="space-y-2">
               <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 rounded-full bg-blue-500 border-2 border-yellow-400"></div>
-                <span className="text-gray-300">Selected Pub</span>
+                <div className="w-4 h-4 rounded-full bg-blue-500 border-2 border-yellow-400"></div>
+                <span className="text-cyan-300 font-bold">Selected</span>
               </div>
               <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                <span className="text-gray-300">Related Pubs</span>
+                <div className="w-4 h-4 rounded-full bg-blue-500"></div>
+                <span className="text-cyan-300 font-bold">Publications</span>
               </div>
               <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                <span className="text-gray-300">Authors</span>
+                <div className="w-4 h-4 rounded-full bg-green-500"></div>
+                <span className="text-green-300 font-bold">Authors</span>
               </div>
               <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                <span className="text-gray-300">Concepts</span>
+                <div className="w-4 h-4 rounded-full bg-yellow-400"></div>
+                <span className="text-yellow-300 font-bold">Concepts</span>
               </div>
             </div>
           </div>
         </div>
 
         {selectedNode && (
-          <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-600">
-            <h4 className="font-semibold text-white mb-2 flex items-center">
-              <div className={`w-3 h-3 rounded-full mr-2 ${
+          <div className="bg-gradient-to-r from-cyan-600 to-blue-600 rounded-2xl p-4 border-2 border-cyan-400">
+            <h4 className="font-black text-white mb-2 flex items-center">
+              <div className={`w-4 h-4 rounded-full mr-2 border-2 border-white ${
                 selectedNode.type === 'publication' ? 'bg-blue-500' :
-                selectedNode.type === 'author' ? 'bg-green-500' : 'bg-yellow-500'
+                selectedNode.type === 'author' ? 'bg-green-500' : 'bg-yellow-400'
               }`}></div>
-              {selectedNode.type === 'publication' ? 'Publication' :
-               selectedNode.type === 'author' ? 'Author' : 'Concept'}
-              {selectedNode.isCentral && <span className="ml-2 text-yellow-400 text-xs">(Selected)</span>}
+              {selectedNode.type === 'publication' ? '📄 Publication' :
+               selectedNode.type === 'author' ? '👤 Author' : '💡 Concept'}
+              {selectedNode.isCentral && <span className="ml-2 px-2 py-0.5 bg-yellow-400 text-slate-900 rounded-full text-xs">★ Active</span>}
             </h4>
-            <p className="text-gray-300 text-sm mb-2">
+            <p className="text-cyan-100 text-sm mb-2 font-medium">
               {selectedNode.type === 'publication' ? selectedNode.fullTitle : selectedNode.label}
             </p>
             {selectedNode.category && (
-              <div className="text-xs text-gray-400">
-                Category: {selectedNode.category} • Organism: {selectedNode.organism}
+              <div className="text-xs text-cyan-200 font-semibold">
+                {selectedNode.category} • {selectedNode.organism}
               </div>
             )}
             {selectedNode.publications && (
-              <div className="text-xs text-gray-400">
-                Connected to {selectedNode.publications.length} publication(s)
+              <div className="text-xs text-cyan-200 font-semibold">
+                🔗 {selectedNode.publications.length} connected publication(s)
               </div>
             )}
           </div>
         )}
 
-        <div className="mt-4 text-xs text-gray-500">
-          <p><strong>Focused Network:</strong> Shows connections for the selected publication • Click other publications to explore their networks • Drag nodes to reposition • Hover to highlight connections</p>
+        <div className="mt-4 p-3 bg-purple-600/30 rounded-xl border-2 border-purple-400/50">
+          <p className="text-xs text-purple-200 font-medium">
+            <strong className="text-yellow-300">💫 Pro Tip:</strong> Click nodes • Drag to move • Hover to highlight • Scroll to zoom!
+          </p>
         </div>
       </div>
     );
@@ -829,32 +837,43 @@ const Dashboard = () => {
   // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 text-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 text-white flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold mb-2">Loading NASA Publications Database</h2>
-          <p className="text-gray-600">Fetching space bioscience publications...</p>
-          <p className="text-xs text-gray-500 mt-2">Please wait while we load the data</p>
+          <div className="bg-yellow-400 w-20 h-20 rounded-full mx-auto mb-6 flex items-center justify-center animate-bounce">
+            <Rocket className="w-10 h-10 text-slate-900" />
+          </div>
+          <h2 className="text-2xl font-bold mb-3 text-yellow-400">Loading NASA Publications!</h2>
+          <p className="text-cyan-300">Fetching space bioscience publications...</p>
+          <div className="mt-4 flex justify-center gap-2">
+            <div className="w-3 h-3 bg-yellow-400 rounded-full animate-pulse"></div>
+            <div className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse delay-100"></div>
+            <div className="w-3 h-3 bg-pink-400 rounded-full animate-pulse delay-200"></div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 text-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 text-white">
       {/* Header */}
-      <div className="bg-white/80 backdrop-blur-sm border-b border-blue-200 sticky top-0 z-50 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-4">
+      <div className="bg-gradient-to-r from-yellow-400 to-yellow-500 border-b-4 border-yellow-600 sticky top-0 z-50 shadow-xl">
+        <div className="max-w-7xl mx-auto px-4 py-5">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <Rocket className="w-8 h-8 text-blue-600" />
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                NASA Bioscience Explorer
-              </h1>
-            </div>
             <div className="flex items-center space-x-4">
-              <div className="text-sm text-blue-700">
-                {filteredPublications.length} of {publications.length} Publications • AI-Enhanced Analysis
+              <div className="bg-blue-600 p-3 rounded-full shadow-lg transform hover:rotate-12 transition-transform">
+                <Rocket className="w-8 h-8 text-yellow-300" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-black text-slate-900 tracking-tight">
+                  NASA Bioscience Explorer
+                </h1>
+                <p className="text-sm text-blue-900 font-semibold">Powered by AI • Space Research Database</p>
+              </div>
+            </div>
+            <div className="bg-slate-900 px-4 py-2 rounded-full border-2 border-cyan-400">
+              <div className="text-sm font-bold text-cyan-300">
+                {filteredPublications.length} / {publications.length} Publications
               </div>
             </div>
           </div>
@@ -863,52 +882,52 @@ const Dashboard = () => {
 
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Search and Filters */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 mb-8 border border-blue-200 shadow-sm">
+        <div className="bg-slate-800/80 backdrop-blur-sm rounded-3xl p-6 mb-8 border-4 border-cyan-500/40 shadow-2xl">
           <div className="flex flex-col lg:flex-row gap-4 items-center">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+              <Search className="absolute left-4 top-3.5 w-5 h-5 text-cyan-400" />
               <input
                 type="text"
-                placeholder="Search publications by title or keywords..."
-                className="w-full pl-10 pr-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-400"
+                placeholder="Search for cool space research..."
+                className="w-full pl-12 pr-4 py-3 bg-slate-700 border-2 border-cyan-400/50 rounded-2xl focus:ring-4 focus:ring-yellow-400/50 focus:border-yellow-400 text-white placeholder-cyan-300/60 font-medium"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
             
-            <div className="flex gap-4">
+            <div className="flex gap-3">
               <select
-                className="bg-white border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 text-gray-900"
+                className="bg-purple-600 border-2 border-purple-400 rounded-2xl px-4 py-3 focus:ring-4 focus:ring-purple-400/50 text-white font-bold"
                 value={filters.category}
                 onChange={(e) => setFilters({...filters, category: e.target.value})}
               >
-                <option value="all">All Categories</option>
-                <option value="Bone & Musculoskeletal">Bone & Musculoskeletal</option>
-                <option value="Radiation Biology">Radiation Biology</option>
-                <option value="Plant Biology">Plant Biology</option>
-                <option value="Cardiovascular & Muscle">Cardiovascular & Muscle</option>
-                <option value="Immunology">Immunology</option>
-                <option value="Cell & Tissue Biology">Cell & Tissue Biology</option>
-                <option value="Molecular Biology">Molecular Biology</option>
-                <option value="Microgravity Effects">Microgravity Effects</option>
-                <option value="Neuroscience & Behavior">Neuroscience & Behavior</option>
-                <option value="Metabolism & Nutrition">Metabolism & Nutrition</option>
-                <option value="General Space Biology">General Space Biology</option>
+                <option value="all">🔬 All Categories</option>
+                <option value="Bone & Musculoskeletal">🦴 Bone & Musculoskeletal</option>
+                <option value="Radiation Biology">☢️ Radiation Biology</option>
+                <option value="Plant Biology">🌱 Plant Biology</option>
+                <option value="Cardiovascular & Muscle">❤️ Cardiovascular & Muscle</option>
+                <option value="Immunology">🛡️ Immunology</option>
+                <option value="Cell & Tissue Biology">🧬 Cell & Tissue Biology</option>
+                <option value="Molecular Biology">🔬 Molecular Biology</option>
+                <option value="Microgravity Effects">🌌 Microgravity Effects</option>
+                <option value="Neuroscience & Behavior">🧠 Neuroscience & Behavior</option>
+                <option value="Metabolism & Nutrition">🍎 Metabolism & Nutrition</option>
+                <option value="General Space Biology">🚀 General Space Biology</option>
               </select>
 
               <select
-                className="bg-white border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 text-gray-900"
+                className="bg-green-600 border-2 border-green-400 rounded-2xl px-4 py-3 focus:ring-4 focus:ring-green-400/50 text-white font-bold"
                 value={filters.organism}
                 onChange={(e) => setFilters({...filters, organism: e.target.value})}
               >
-                <option value="all">All Organisms</option>
-                <option value="Human">Human</option>
-                <option value="Mouse">Mouse</option>
-                <option value="Rat">Rat</option>
-                <option value="Arabidopsis">Arabidopsis</option>
-                <option value="Drosophila">Drosophila</option>
-                <option value="Cell Culture">Cell Culture</option>
-                <option value="Multiple/Other">Multiple/Other</option>
+                <option value="all">🐾 All Organisms</option>
+                <option value="Human">👤 Human</option>
+                <option value="Mouse">🐭 Mouse</option>
+                <option value="Rat">🐀 Rat</option>
+                <option value="Arabidopsis">🌿 Arabidopsis</option>
+                <option value="Drosophila">🪰 Drosophila</option>
+                <option value="Cell Culture">🧫 Cell Culture</option>
+                <option value="Multiple/Other">🔬 Multiple/Other</option>
               </select>
             </div>
           </div>
@@ -916,16 +935,24 @@ const Dashboard = () => {
 
         {/* Stats Dashboard */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-          <div className="bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl p-4 border border-blue-300 shadow-sm">
-            <div className="text-2xl font-bold text-blue-700">{publications.length}</div>
-            <div className="text-sm text-blue-600">Total Publications</div>
+          <div className="bg-gradient-to-br from-yellow-400 to-orange-400 rounded-3xl p-5 border-4 border-yellow-500 shadow-xl transform hover:scale-105 transition-transform">
+            <div className="text-3xl font-black text-slate-900">{publications.length}</div>
+            <div className="text-sm font-bold text-slate-800">Total Publications</div>
           </div>
-          {topCategories.slice(0, 4).map(([category, count], index) => (
-            <div key={category} className="bg-gradient-to-br from-purple-100 to-purple-200 rounded-xl p-4 border border-purple-300 shadow-sm">
-              <div className="text-2xl font-bold text-purple-700">{count}</div>
-              <div className="text-sm text-purple-600">{category.split(' ')[0]}...</div>
-            </div>
-          ))}
+          {topCategories.slice(0, 4).map(([category, count], index) => {
+            const colors = [
+              'from-pink-400 to-purple-500 border-pink-500',
+              'from-cyan-400 to-blue-500 border-cyan-500', 
+              'from-green-400 to-emerald-500 border-green-500',
+              'from-red-400 to-rose-500 border-red-500'
+            ];
+            return (
+              <div key={category} className={`bg-gradient-to-br ${colors[index]} rounded-3xl p-5 border-4 shadow-xl transform hover:scale-105 transition-transform`}>
+                <div className="text-3xl font-black text-white">{count}</div>
+                <div className="text-sm font-bold text-white/90">{category.split(' ')[0]}...</div>
+              </div>
+            );
+          })}
         </div>
 
         {/* Main Content */}
