@@ -489,12 +489,6 @@ const Dashboard = () => {
             )}
           </div>
         )}
-
-        <div className="mt-4 p-3 bg-purple-600/30 rounded-xl border-2 border-purple-400/50">
-          <p className="text-xs text-purple-200 font-medium">
-            <strong className="text-yellow-300">💫 Pro Tip:</strong> Click nodes • Drag to move • Hover to highlight • Scroll to zoom!
-          </p>
-        </div>
       </div>
     );
   };
@@ -866,9 +860,9 @@ const Dashboard = () => {
               </div>
               <div>
                 <h1 className="text-3xl font-black text-slate-900 tracking-tight">
-                  NASA Bioscience Explorer
+                  Jackie of &apos;No&apos; Trades
                 </h1>
-                <p className="text-sm text-blue-900 font-semibold">Powered by AI • Space Research Database</p>
+                <p className="text-sm text-blue-900 font-semibold">Let&apos;s research with Jackie, shall we?</p>
               </div>
             </div>
             <div className="bg-slate-900 px-4 py-2 rounded-full border-2 border-cyan-400">
@@ -902,17 +896,17 @@ const Dashboard = () => {
                 onChange={(e) => setFilters({...filters, category: e.target.value})}
               >
                 <option value="all">🔬 All Categories</option>
-                <option value="Bone & Musculoskeletal">🦴 Bone & Musculoskeletal</option>
-                <option value="Radiation Biology">☢️ Radiation Biology</option>
-                <option value="Plant Biology">🌱 Plant Biology</option>
-                <option value="Cardiovascular & Muscle">❤️ Cardiovascular & Muscle</option>
-                <option value="Immunology">🛡️ Immunology</option>
-                <option value="Cell & Tissue Biology">🧬 Cell & Tissue Biology</option>
-                <option value="Molecular Biology">🔬 Molecular Biology</option>
-                <option value="Microgravity Effects">🌌 Microgravity Effects</option>
-                <option value="Neuroscience & Behavior">🧠 Neuroscience & Behavior</option>
-                <option value="Metabolism & Nutrition">🍎 Metabolism & Nutrition</option>
-                <option value="General Space Biology">🚀 General Space Biology</option>
+                <option value="Bone & Musculoskeletal"> Bone & Musculoskeletal</option>
+                <option value="Radiation Biology"> Radiation Biology</option>
+                <option value="Plant Biology"> Plant Biology</option>
+                <option value="Cardiovascular & Muscle"> Cardiovascular & Muscle</option>
+                <option value="Immunology"> Immunology</option>
+                <option value="Cell & Tissue Biology"> Cell & Tissue Biology</option>
+                <option value="Molecular Biology"> Molecular Biology</option>
+                <option value="Microgravity Effects"> Microgravity Effects</option>
+                <option value="Neuroscience & Behavior"> Neuroscience & Behavior</option>
+                <option value="Metabolism & Nutrition"> Metabolism & Nutrition</option>
+                <option value="General Space Biology"> General Space Biology</option>
               </select>
 
               <select
@@ -921,13 +915,13 @@ const Dashboard = () => {
                 onChange={(e) => setFilters({...filters, organism: e.target.value})}
               >
                 <option value="all">🐾 All Organisms</option>
-                <option value="Human">👤 Human</option>
-                <option value="Mouse">🐭 Mouse</option>
-                <option value="Rat">🐀 Rat</option>
-                <option value="Arabidopsis">🌿 Arabidopsis</option>
-                <option value="Drosophila">🪰 Drosophila</option>
-                <option value="Cell Culture">🧫 Cell Culture</option>
-                <option value="Multiple/Other">🔬 Multiple/Other</option>
+                <option value="Human"> Human</option>
+                <option value="Mouse"> Mouse</option>
+                <option value="Rat"> Rat</option>
+                <option value="Arabidopsis"> Arabidopsis</option>
+                <option value="Drosophila"> Drosophila</option>
+                <option value="Cell Culture"> Cell Culture</option>
+                <option value="Multiple/Other"> Multiple/Other</option>
               </select>
             </div>
           </div>
@@ -1026,7 +1020,7 @@ const Dashboard = () => {
                       >
                         <ExternalLink className="w-4 h-4" />
                       </a>
-                      <Zap className="w-4 h-4 text-yellow-400" title="Click for AI Analysis" />
+                      <Zap className="w-4 h-4 text-yellow-400" title="Click to see Jackie's analysis!" />
                     </div>
                   </div>
                 </div>
@@ -1038,23 +1032,23 @@ const Dashboard = () => {
           <div className="lg:col-span-1">
             <h2 className="text-xl font-bold mb-4 flex items-center">
               <Brain className="w-5 h-5 mr-2 text-purple-400" />
-              AI Analysis Panel
+              Jackie&apos;s Working Station
             </h2>
 
             {!selectedPublication && (
               <div className="bg-gradient-to-br from-black/40 to-black/20 backdrop-blur-sm rounded-xl p-6 border border-gray-600 text-center">
                 <Brain className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-400 mb-2">Select a Publication</h3>
-                <p className="text-sm text-gray-500">Click on any publication to get AI-powered analysis and insights</p>
+                <h3 className="text-lg font-semibold text-gray-400 mb-2">Choose a Publication</h3>
+                <p className="text-sm text-gray-500">Click to see Jackie&apos;s analysis and insights!</p>
               </div>
             )}
 
             {selectedPublication && aiProcessing && (
               <div className="bg-gradient-to-br from-purple-600/20 to-blue-600/20 backdrop-blur-sm rounded-xl p-6 border border-purple-500/30 text-center">
                 <Loader2 className="w-8 h-8 animate-spin text-purple-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-purple-300 mb-2">Gemini AI Analysis in Progress...</h3>
-                <p className="text-sm text-gray-400">Analyzing publication with Google's Gemini AI</p>
-                <p className="text-xs text-gray-500 mt-2">This may take 10-30 seconds for comprehensive analysis</p>
+                <h3 className="text-lg font-semibold text-purple-300 mb-2">Analysis in Progress... Hang in there!</h3>
+                <p className="text-sm text-gray-400">&apos;Jackie will turn a 20-page research into insightful summaries!&apos;</p>
+                <p className="text-xs text-gray-500 mt-2"></p>
               </div>
             )}
 
@@ -1122,7 +1116,7 @@ const Dashboard = () => {
                     <div className="bg-gradient-to-br from-black/40 to-black/20 backdrop-blur-sm rounded-xl p-4 border border-green-500/30">
                       <h4 className="font-semibold text-green-400 mb-2 text-sm flex items-center">
                         <Brain className="w-4 h-4 mr-1" />
-                        Gemini AI Summary
+                        Summary
                       </h4>
                       <div className="max-h-32 overflow-y-auto pr-2">
                         <p className="text-xs text-gray-300 leading-relaxed">{aiResponse.summary}</p>
@@ -1156,82 +1150,6 @@ const Dashboard = () => {
                             </li>
                           ))}
                         </ul>
-                      </div>
-                    )}
-
-                    {/* Visual Diagram */}
-                    {aiResponse.visualDiagram && (
-                      <div className="bg-gradient-to-br from-black/40 to-black/20 backdrop-blur-sm rounded-xl p-4 border border-cyan-500/30">
-                        <h4 className="font-semibold text-cyan-400 mb-3 text-sm">AI-Generated Research Diagram</h4>
-                        <div className="bg-gray-800 rounded-lg p-4 mb-2">
-                          <h5 className="text-cyan-300 text-xs mb-2 font-medium">{aiResponse.visualDiagram.title}</h5>
-                          <svg viewBox="0 0 400 200" className="w-full h-32">
-                            {aiResponse.visualDiagram.nodes.map((node, index) => {
-                              const x = 40 + (index * 70);
-                              const y = 100;
-                              return (
-                                <g key={index}>
-                                  <rect 
-                                    x={x-30} 
-                                    y={y-20} 
-                                    width="60" 
-                                    height="40" 
-                                    fill="#3b82f6" 
-                                    fillOpacity="0.3" 
-                                    stroke="#3b82f6" 
-                                    strokeWidth="1"
-                                    rx="8"
-                                  />
-                                  <text 
-                                    x={x} 
-                                    y={y-5} 
-                                    textAnchor="middle" 
-                                    fontSize="7" 
-                                    fill="#ffffff"
-                                    className="font-medium"
-                                  >
-                                    {node.length > 10 ? node.substring(0, 10) + '...' : node}
-                                  </text>
-                                  <text 
-                                    x={x} 
-                                    y={y+5} 
-                                    textAnchor="middle" 
-                                    fontSize="6" 
-                                    fill="#60a5fa"
-                                  >
-                                    {node.length > 10 ? node.substring(10) : ''}
-                                  </text>
-                                </g>
-                              );
-                            })}
-                            {aiResponse.visualDiagram.connections && aiResponse.visualDiagram.connections.map((connection, index) => {
-                              const startIdx = aiResponse.visualDiagram.nodes.indexOf(connection[0]);
-                              const endIdx = aiResponse.visualDiagram.nodes.indexOf(connection[1]);
-                              if (startIdx !== -1 && endIdx !== -1) {
-                                const x1 = 40 + (startIdx * 70) + 30;
-                                const x2 = 40 + (endIdx * 70) - 30;
-                                return (
-                                  <line 
-                                    key={index}
-                                    x1={x1} 
-                                    y1={100} 
-                                    x2={x2} 
-                                    y2={100}
-                                    stroke="#60a5fa" 
-                                    strokeWidth="2"
-                                    markerEnd="url(#arrowhead)"
-                                  />
-                                );
-                              }
-                              return null;
-                            })}
-                            <defs>
-                              <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-                                <polygon points="0 0, 10 3.5, 0 7" fill="#60a5fa" />
-                              </marker>
-                            </defs>
-                          </svg>
-                        </div>
                       </div>
                     )}
 
