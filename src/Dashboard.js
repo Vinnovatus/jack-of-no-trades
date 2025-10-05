@@ -309,7 +309,7 @@ const Dashboard = () => {
         .text(d => d.label)
         .attr("font-size", d => d.isCentral ? "12px" : "10px")
         .attr("font-weight", d => d.isCentral ? "bold" : "normal")
-        .attr("fill", "#1f2937")
+        .attr("fill", "#d5dfee")
         .attr("text-anchor", "middle")
         .attr("dy", ".35em")
         .style("pointer-events", "none");
